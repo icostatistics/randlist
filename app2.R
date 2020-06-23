@@ -346,4 +346,4 @@ output$report <- downloadHandler(
 ) 
 }
 
-shinyApp(ui = ui, server = server, enableBookmarking = "server")
+shinyApp(ui = ui, server = server, enableBookmarking = "url")
