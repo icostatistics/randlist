@@ -268,7 +268,7 @@ server <- function(input, output, session) {
       arrange(blockno, rand) %>%
       mutate(seq_in_block = 1:n()) %>% 
       group_by(SiteCode) %>% 
-      mutate(RandNo = as.integer(SiteCode*1000 + 1:n())) %>% 
+      mutate(RandNo = as.integer(SiteCode*10000 + 1:n())) %>% 
       select(-tempstrat, -rand) %>% 
       select( SiteCode, RandNo, everything())
       
