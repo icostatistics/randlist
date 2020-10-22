@@ -5,8 +5,7 @@ library(openxlsx)
 
 
 
-ui <- function(request){
-  dashboardPage(
+ui <- dashboardPage(
   dashboardHeader(title = "Random allocation list generator"),
   dashboardSidebar(
     sidebarMenu(
@@ -58,8 +57,7 @@ ui <- function(request){
           radioButtons("blockinfo", "With block information?", 
                        c("Yes" = "y", "No" = "n")),
           downloadButton("gen_xls", "Download list"), 
-          downloadButton("report", "Download report"), 
-          bookmarkButton()
+          downloadButton("report", "Download report")
           )
     ),
     fluidRow(
@@ -72,7 +70,7 @@ ui <- function(request){
     )
   )
 )
-}
+
 
 server <- function(input, output, session) {
   output$arms <- renderUI({
@@ -270,7 +268,7 @@ server <- function(input, output, session) {
       arrange(blockno, rand) %>%
       mutate(seq_in_block = 1:n()) %>% 
       group_by(SiteCode) %>% 
-      mutate(RandNo = as.integer(SiteCode*1000 + 1:n())) %>% 
+      mutate(RandNo = as.integer(SiteCode*10000 + 1:n())) %>% 
       select(-tempstrat, -rand) %>% 
       select( SiteCode, RandNo, everything())
       
@@ -346,4 +344,4 @@ output$report <- downloadHandler(
 ) 
 }
 
-shinyApp(ui = ui, server = server, enableBookmarking = "url")
+shinyApp(ui = ui, server = server)

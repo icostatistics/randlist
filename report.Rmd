@@ -80,36 +80,38 @@ params$seed
 With the above parameters and the code below, the same random allocation list as produced by the application should be produced. 
 
 ```{r}
-    set.seed(params$seed)
+set.seed(params$seed)
 arms <- nrow(params$alloclist)
-   
-    my_randlist <- params$stratalist %>%
-      crossing(SiteCode = 1:params$nsites) %>%
-      arrange(SiteCode) %>%
-      mutate(tempstrat = 1:n()) %>%
-    crossing(blockno = 1:params$blockno) %>%
-    mutate(blockno = 1:n()) %>%
-    group_by(blockno) %>%
-    mutate(
-      blocksize = ifelse(length(params$blocksize) > 1,
-        sample(params$blocksize, 1),
-        params$blocksize),
-      blocksize = as.integer(blocksize)
-      ) %>%
-      mutate(blocksize2 = blocksize/as.integer(arms)) %>%
-      crossing(params$alloclist) %>%
-      ungroup() %>%
-      select(SiteCode, blockno, blocksize, everything()) %>%
-      arrange(SiteCode, blockno) %>%
-      uncount(blocksize2) %>%
-      group_by(blockno) %>%
-      mutate(rand = runif(n())) %>%
-      arrange(blockno, rand) %>%
-      mutate(seq_in_block = 1:n()) %>%
-      group_by(SiteCode) %>%
-      mutate(RandNo = as.integer(SiteCode*1000 + 1:n())) %>%
-      select(-tempstrat, -rand) %>%
-      select(SiteCode, RandNo, everything())
+
+my_randlist <- params$stratalist %>%
+  crossing(SiteCode = 1:params$nsites) %>%
+  arrange(SiteCode) %>%
+  mutate(tempstrat = 1:n()) %>%
+  crossing(blockno = 1:params$blockno) %>%
+  mutate(blockno = 1:n()) %>%
+  group_by(blockno) %>%
+  mutate(
+    blocksize = ifelse(
+      length(params$blocksize) > 1,
+      sample(params$blocksize, 1),
+      params$blocksize
+    ),
+    blocksize = as.integer(blocksize)
+  ) %>%
+  mutate(blocksize2 = blocksize / as.integer(arms)) %>%
+  crossing(params$alloclist) %>%
+  ungroup() %>%
+  select(SiteCode, blockno, blocksize, everything()) %>%
+  arrange(SiteCode, blockno) %>%
+  uncount(blocksize2) %>%
+  group_by(blockno) %>%
+  mutate(rand = runif(n())) %>%
+  arrange(blockno, rand) %>%
+  mutate(seq_in_block = 1:n()) %>%
+  group_by(SiteCode) %>%
+  mutate(RandNo = as.integer(SiteCode * 1000 + 1:n())) %>%
+  select(-tempstrat,-rand) %>%
+  select(SiteCode, RandNo, everything())
 ```
 
 A sample of the list is as follows:
@@ -121,6 +123,7 @@ my_randlist
 If everything has gone according to plan, the resulting list produced by the code specified above should produce an identical list as the one produced by the web application. A test of this is done by the following code, where the list produced by the code specified in this document is compared to the list produced by the code behind the web application. They should be identical, and the resulting test should be "TRUE".
 
 ```{r}  
-all_equal(my_randlist,params$randlist)
+vars <- c("blockno", "blocksize", "seq_in_block")
+all_equal(my_randlist %>% select(-any_of(vars)) ,params$randlist%>% select(-any_of(vars)))
 ```
 

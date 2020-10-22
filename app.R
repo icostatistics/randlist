@@ -5,7 +5,8 @@ library(openxlsx)
 
 
 
-ui <- dashboardPage(
+ui <- function(request){
+  dashboardPage(
   dashboardHeader(title = "Random allocation list generator"),
   dashboardSidebar(
     sidebarMenu(
@@ -57,7 +58,10 @@ ui <- dashboardPage(
           radioButtons("blockinfo", "With block information?", 
                        c("Yes" = "y", "No" = "n")),
           downloadButton("gen_xls", "Download list"), 
-          downloadButton("report", "Download report")
+          downloadButton("report", "Download report"), 
+          downloadButton("params", "Download Parameters"), 
+          downloadButton("code", "Download Code"), 
+          bookmarkButton()
           )
     ),
     fluidRow(
@@ -70,7 +74,7 @@ ui <- dashboardPage(
     )
   )
 )
-
+}
 
 server <- function(input, output, session) {
   output$arms <- renderUI({
@@ -268,7 +272,7 @@ server <- function(input, output, session) {
       arrange(blockno, rand) %>%
       mutate(seq_in_block = 1:n()) %>% 
       group_by(SiteCode) %>% 
-      mutate(RandNo = as.integer(SiteCode*10000 + 1:n())) %>% 
+      mutate(RandNo = as.integer(SiteCode*1000 + 1:n())) %>% 
       select(-tempstrat, -rand) %>% 
       select( SiteCode, RandNo, everything())
       
@@ -341,7 +345,88 @@ output$report <- downloadHandler(
                       envir = new.env(parent = globalenv())
     )
   }
-) 
+)
+
+output$params <- downloadHandler(
+  #Download  the parameters
+  filename = function() {
+   "rand_params.rds"
+  },
+  content = function(file) {
+    # Set up parameters 
+    params <- list(randlist = randlist(),
+                   blocksize = blocklist()[[1]],
+                   blockno = blocklist()[[2]],
+                   seed = seed(),
+                   alloclist = alloclist(),
+                   stratalist = stratalist(),
+                   nsites = input$nsites, 
+                   blocks = input$blocks
+    )
+    
+    #Save the parameters
+    write_rds(params, file)
+    
+  }
+)
+
+
+output$code <- downloadHandler(
+  #Download  the parameters
+  filename = function() {
+    "rand_code.R"
+  },
+  content = function(file) {
+    # Set up parameters 
+    text <- 
+    "
+    library(tidyverse)
+    
+    params <- read_rds('rand_params.rds')
+    
+    set.seed(params$seed)
+    arms <- nrow(params$alloclist)
+    
+    my_randlist <- params$stratalist %>%
+      crossing(SiteCode = 1:params$nsites) %>%
+      arrange(SiteCode) %>%
+      mutate(tempstrat = 1:n()) %>%
+      crossing(blockno = 1:params$blockno) %>%
+      mutate(blockno = 1:n()) %>%
+      group_by(blockno) %>%
+      mutate(
+        blocksize = ifelse(
+          length(params$blocksize) > 1,
+          sample(params$blocksize, 1),
+          params$blocksize
+        ),
+        blocksize = as.integer(blocksize)
+      ) %>%
+      mutate(blocksize2 = blocksize / as.integer(arms)) %>%
+      crossing(params$alloclist) %>%
+      ungroup() %>%
+      select(SiteCode, blockno, blocksize, everything()) %>%
+      arrange(SiteCode, blockno) %>%
+      uncount(blocksize2) %>%
+      group_by(blockno) %>%
+      mutate(rand = runif(n())) %>%
+      arrange(blockno, rand) %>%
+      mutate(seq_in_block = 1:n()) %>%
+      group_by(SiteCode) %>%
+      mutate(RandNo = as.integer(SiteCode * 1000 + 1:n())) %>%
+      select(-tempstrat,-rand) %>%
+      select(SiteCode, RandNo, everything())
+    
+      write_excel_csv2(my_randlist, file = 'randlist.csv')
+      "
+    
+    #Save the parameters
+    write_file(text, file)
+    
+  }
+)
 }
 
-shinyApp(ui = ui, server = server)
+shinyApp(ui = ui, server = server, enableBookmarking = "url")
+
+
