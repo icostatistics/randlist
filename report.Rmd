@@ -33,7 +33,7 @@ params$alloclist
  
 ## Block information
 
-`r if(params$blocks == "fixed") {paste0("The block size is fixed at ",parms$blocksize, " for all blocks.")}`
+`r if(params$blocks == "fixed") {paste0("The block size is fixed at ",params$blocksize, " for all blocks.")}`
 
 `r if(params$blocks == "simple") {"This is a simple, unblocked random allocation list. Therefore the 'block' spans the whole list."}`
 
