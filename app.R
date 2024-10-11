@@ -11,7 +11,7 @@ ui <- function(request){
   dashboardSidebar(
     sidebarMenu(
       menuItem("Parameters", tabName = "params"),
-      radioButtons("arms", "Number of treatment arms", choices = seq(2, 5, 1), inline = TRUE),
+      radioButtons("arms", "Number of treatment arms", choices = seq(2, 6, 1), inline = TRUE),
       radioButtons("blocks", "Type of randomisation", 
                    c("Simple" = "simple",
                      "Fixed Block Size" = "fixed",
@@ -81,7 +81,7 @@ server <- function(input, output, session) {
     v <- list()
     armnames <- c(
       "Control", "Intervention", "Intervention 2",
-      "Intervention 3", "Intervention 4"
+      "Intervention 3", "Intervention 4", "Intervention 5"
     )
     v[[1]] <- textInput("allocvar", "Name of allocation variable",
       value = "ARM"
